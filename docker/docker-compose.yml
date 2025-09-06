@@ -1,0 +1,114 @@
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: ecommerce_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ecommerce_analytics
+      MYSQL_USER: ecommerce_user
+      MYSQL_PASSWORD: ecommerce_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - ecommerce_network
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Spring Boot Backend
+  backend:
+    build: 
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: ecommerce_backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ecommerce_analytics?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ecommerce_user
+      SPRING_DATASOURCE_PASSWORD: ecommerce_pass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPARK_MASTER: spark://spark-master:7077
+      SPARK_APP_NAME: ECommerceAnalytics
+      SPARK_SQL_WAREHOUSE_DIR: /app/spark-warehouse
+      SPARK_DRIVER_MEMORY: 2g
+      SPARK_EXECUTOR_MEMORY: 2g
+      HADOOP_HOME: /opt/hadoop
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - spark-master
+    networks:
+      - ecommerce_network
+    volumes:
+      - spark_warehouse:/app/spark-warehouse
+      - spark_data:/app/data
+    restart: unless-stopped
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: ecommerce_frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - ecommerce_network
+    restart: unless-stopped
+
+  # Apache Spark (Optional for standalone Spark cluster)
+  spark-master:
+    image: bitnami/spark:3.5.0
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8090:8080"
+      - "7077:7077"
+    networks:
+      - ecommerce_network
+    volumes:
+      - spark_data:/opt/bitnami/spark/data
+      - ../data:/data
+
+  spark-worker:
+    image: bitnami/spark:3.5.0
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    depends_on:
+      - spark-master
+    networks:
+      - ecommerce_network
+    volumes:
+      - spark_data:/opt/bitnami/spark/data
+      - ../data:/data
+
+volumes:
+  mysql_data:
+    driver: local
+  spark_warehouse:
+    driver: local
+  spark_data:
+    driver: local
+
+networks:
+  ecommerce_network:
+    driver: bridge
