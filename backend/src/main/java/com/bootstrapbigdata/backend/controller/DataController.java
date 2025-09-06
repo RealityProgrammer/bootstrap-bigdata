@@ -33,18 +33,18 @@ public class DataController {
     /**
      * Export dữ liệu ra CSV
      */
-    @GetMapping("/export/csv")
-    public ResponseEntity<String> exportDataToCsv() {
-        try {
-            String csvData = dataImportService.exportDataToCsv();
-            return ResponseEntity.ok()
-                    .header("Content-Type", "text/csv")
-                    .header("Content-Disposition", "attachment; filename=sales_analysis.csv")
-                    .body(csvData);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Failed to export data: " + e.getMessage());
-        }
-    }
+    // @GetMapping("/export/csv")
+    // public ResponseEntity<String> exportDataToCsv() {
+    //     try {
+    //         String csvData = dataImportService.exportDataToCsv();
+    //         return ResponseEntity.ok()
+    //                 .header("Content-Type", "text/csv")
+    //                 .header("Content-Disposition", "attachment; filename=sales_analysis.csv")
+    //                 .body(csvData);
+    //     } catch (Exception e) {
+    //         return ResponseEntity.badRequest().body("Failed to export data: " + e.getMessage());
+    //     }
+    // }
     
     /**
      * Lấy thống kê tổng quan
