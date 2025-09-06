@@ -16,8 +16,8 @@
 
     <properties>
         <java.version>17</java.version>
-        <spark.version>4.0.0</spark.version>
-        <scala.binary.version>2.13</scala.binary.version>
+        <spark.version>3.5.0</spark.version>
+        <scala.binary.version>2.12</scala.binary.version>
     </properties>
 
     <dependencies>
@@ -38,13 +38,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-        <!-- Fix ANTLR version -->
+        <!-- Fix ANTLR version
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
         </dependency>
-        
+         -->
         <!-- Database -->
         <dependency>
             <groupId>mysql</groupId>
